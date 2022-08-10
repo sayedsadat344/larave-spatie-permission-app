@@ -1,3 +1,3 @@
 <div class="row mt-3">
-    @livewire('users-list')
+    @livewire('role-list')
 </div>

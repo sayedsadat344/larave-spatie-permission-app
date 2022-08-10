@@ -1,31 +1,30 @@
 <?php
 
+
 namespace App\Http\Livewire;
 
+use App\Models\Product;
+use Livewire\Component;
 use App\Models\User;
 use Illuminate\Validation\Rule;
-use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
 
-class UsersList extends Component
+class RoleList extends Component
 {
+
 
     use WithPagination;
 
-    public $name,$password,$email,$password_confirmation;
+    public $name;
     public $isUpdateOperation = false;
-    public $user_id;
+    public $role_id;
     public $rec_per_pages = 5;
+    protected $paginationTheme = 'bootstrap';
     public $search = '';
 
-    protected $paginationTheme = 'bootstrap';
-
-
-
     protected $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed']
+            'name' => ['required', 'string', 'max:100'],
         ];
 
 
@@ -33,41 +32,36 @@ class UsersList extends Component
 
     public function render()
     {
-        return view('livewire.user-list',[
-            'users' => User::search('name',$this->search)->paginate($this->rec_per_pages)
+        return view('livewire.role-list',[
+            'roles' => Role::search('name',$this->search)->paginate($this->rec_per_pages)
         ]);
     }
 
-    //CREATE USER
-    public function storeUser(){
+    //CREATE PRODUCT
+    public function storeRole(){
 
         if($this->isUpdateOperation){
-
-            $data = $this->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($this->user_id)],
-
-            ]);
-
-
-            $this->updateUser($data);
+            $data = $this->validate();
+            $this->updateRole($data);
         }else{
             $data = $this->validate();
-            $this->saveUser($data);
+            $this->saveRole($data);
         }
 
     }
 
-    public function saveUser($data){
+    public function saveRole($data){
+
         try {
-            User::create($data);
+            Role::create($data);
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'Item has been Saved.',
                 'icon'=>'success',
                 'iconColor'=>'blue',
             ]);
 
-            $this->dispatchBrowserEvent('closeModal', 'createUser'); //event name & model id
+            $this->dispatchBrowserEvent('closeModal', 'createRole'); //event name & model id
+            $this->resetForm();
         } catch (\Throwable $th) {
 
             $this->dispatchBrowserEvent('Swal', [
@@ -80,33 +74,29 @@ class UsersList extends Component
         }
     }
 
-    public function editUser($id){
+    public function editRole($id){
         $this->isUpdateOperation = true;
-        $user = User::findOrFail($id);
-        $this->user_id = $user->id;
-        $this->name = $user->name;
-        $this->email = $user->email;
+        $role = Role::findOrFail($id);
+        $this->role_id = $role->id;
+        $this->name = $role->name;
+
     }
 
     //UPDATE USER
-    public function updateUser($data){
+    public function updateRole($data){
         try {
 
 
-            // $user = User::findOrFail($this->user_id)->first();
-            // $user->name = $data['name'];
-            // $user->email = $data['email'];
-
-            // $user->update();
-
-            User::whereId($this->user_id)->update($data);
+            Role::whereId($this->role_id)->update($data);
 
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'User Updated.',
                 'icon'=>'success',
                 'iconColor'=>'green',
             ]);
-            $this->dispatchBrowserEvent('closeModal', 'createUser');
+            $this->dispatchBrowserEvent('closeModal', 'createRole');
+
+            $this->resetForm();
         } catch (\Throwable $th) {
 
             $this->dispatchBrowserEvent('Swal', [
@@ -121,10 +111,10 @@ class UsersList extends Component
 
 
     //DELETE USER
-    public function deleteUser($id){
+    public function deleteRole($id){
         try {
             // User::delete($id);
-            User::where('id', $id)->first()->delete();
+            Role::where('id', $id)->first()->delete();
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'Item has deleted.',
                 'icon'=>'success',
@@ -134,5 +124,9 @@ class UsersList extends Component
             //throw $th;
             dd($th);
         }
+    }
+
+    public function resetForm(){
+        $this->name = null;
     }
 }

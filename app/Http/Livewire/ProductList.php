@@ -2,30 +2,27 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\Product;
+use Livewire\Component;
 use App\Models\User;
 use Illuminate\Validation\Rule;
-use Livewire\Component;
 use Livewire\WithPagination;
 
-class UsersList extends Component
+class ProductList extends Component
 {
+
 
     use WithPagination;
 
-    public $name,$password,$email,$password_confirmation;
+    public $name;
     public $isUpdateOperation = false;
-    public $user_id;
+    public $product_id;
     public $rec_per_pages = 5;
-    public $search = '';
-
     protected $paginationTheme = 'bootstrap';
-
-
+    public $search = '';
 
     protected $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed']
         ];
 
 
@@ -33,41 +30,36 @@ class UsersList extends Component
 
     public function render()
     {
-        return view('livewire.user-list',[
-            'users' => User::search('name',$this->search)->paginate($this->rec_per_pages)
+        return view('livewire.product-list',[
+            'products' => Product::search('name',$this->search)->paginate($this->rec_per_pages)
         ]);
     }
 
-    //CREATE USER
-    public function storeUser(){
+    //CREATE PRODUCT
+    public function storeProduct(){
 
         if($this->isUpdateOperation){
 
-            $data = $this->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($this->user_id)],
-
-            ]);
-
-
-            $this->updateUser($data);
+            $data = $this->validate();
+            $this->updateProduct($data);
         }else{
             $data = $this->validate();
-            $this->saveUser($data);
+            $this->saveProduct($data);
         }
 
     }
 
-    public function saveUser($data){
+    public function saveProduct($data){
         try {
-            User::create($data);
+            Product::create($data);
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'Item has been Saved.',
                 'icon'=>'success',
                 'iconColor'=>'blue',
             ]);
 
-            $this->dispatchBrowserEvent('closeModal', 'createUser'); //event name & model id
+            $this->dispatchBrowserEvent('closeModal', 'createProduct'); //event name & model id
+            $this->resetForm();
         } catch (\Throwable $th) {
 
             $this->dispatchBrowserEvent('Swal', [
@@ -80,33 +72,29 @@ class UsersList extends Component
         }
     }
 
-    public function editUser($id){
+    public function editProduct($id){
         $this->isUpdateOperation = true;
-        $user = User::findOrFail($id);
-        $this->user_id = $user->id;
-        $this->name = $user->name;
-        $this->email = $user->email;
+        $product = Product::findOrFail($id);
+        $this->product_id = $product->id;
+        $this->name = $product->name;
+
     }
 
     //UPDATE USER
-    public function updateUser($data){
+    public function updateProduct($data){
         try {
 
 
-            // $user = User::findOrFail($this->user_id)->first();
-            // $user->name = $data['name'];
-            // $user->email = $data['email'];
-
-            // $user->update();
-
-            User::whereId($this->user_id)->update($data);
+            Product::whereId($this->product_id)->update($data);
 
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'User Updated.',
                 'icon'=>'success',
                 'iconColor'=>'green',
             ]);
-            $this->dispatchBrowserEvent('closeModal', 'createUser');
+            $this->dispatchBrowserEvent('closeModal', 'createProduct');
+
+            $this->resetForm();
         } catch (\Throwable $th) {
 
             $this->dispatchBrowserEvent('Swal', [
@@ -121,10 +109,10 @@ class UsersList extends Component
 
 
     //DELETE USER
-    public function deleteUser($id){
+    public function deleteProduct($id){
         try {
             // User::delete($id);
-            User::where('id', $id)->first()->delete();
+            Product::where('id', $id)->first()->delete();
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'Item has deleted.',
                 'icon'=>'success',
@@ -134,5 +122,9 @@ class UsersList extends Component
             //throw $th;
             dd($th);
         }
+    }
+
+    public function resetForm(){
+        $this->name = null;
     }
 }

@@ -2,30 +2,26 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\User;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Permission;
 
-class UsersList extends Component
+class PermissionList extends Component
 {
+
+
 
     use WithPagination;
 
-    public $name,$password,$email,$password_confirmation;
+    public $name;
     public $isUpdateOperation = false;
-    public $user_id;
+    public $permission_id;
     public $rec_per_pages = 5;
+    protected $paginationTheme = 'bootstrap';
     public $search = '';
 
-    protected $paginationTheme = 'bootstrap';
-
-
-
     protected $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed']
+            'name' => ['required', 'string', 'max:100'],
         ];
 
 
@@ -33,41 +29,36 @@ class UsersList extends Component
 
     public function render()
     {
-        return view('livewire.user-list',[
-            'users' => User::search('name',$this->search)->paginate($this->rec_per_pages)
+        return view('livewire.permission-list',[
+            'permissions' => Permission::search('name',$this->search)->paginate($this->rec_per_pages)
         ]);
     }
 
-    //CREATE USER
-    public function storeUser(){
+    //CREATE PRODUCT
+    public function storePermission(){
 
         if($this->isUpdateOperation){
-
-            $data = $this->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($this->user_id)],
-
-            ]);
-
-
-            $this->updateUser($data);
+            $data = $this->validate();
+            $this->updatePermission($data);
         }else{
             $data = $this->validate();
-            $this->saveUser($data);
+            $this->savePermission($data);
         }
 
     }
 
-    public function saveUser($data){
+    public function savePermission($data){
+
         try {
-            User::create($data);
+            Permission::create($data);
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'Item has been Saved.',
                 'icon'=>'success',
                 'iconColor'=>'blue',
             ]);
 
-            $this->dispatchBrowserEvent('closeModal', 'createUser'); //event name & model id
+            $this->dispatchBrowserEvent('closeModal', 'createPermission'); //event name & model id
+            $this->resetForm();
         } catch (\Throwable $th) {
 
             $this->dispatchBrowserEvent('Swal', [
@@ -80,33 +71,29 @@ class UsersList extends Component
         }
     }
 
-    public function editUser($id){
+    public function editPermission($id){
         $this->isUpdateOperation = true;
-        $user = User::findOrFail($id);
-        $this->user_id = $user->id;
-        $this->name = $user->name;
-        $this->email = $user->email;
+        $permission = Permission::findOrFail($id);
+        $this->permission_id = $permission->id;
+        $this->name = $permission->name;
+
     }
 
     //UPDATE USER
-    public function updateUser($data){
+    public function updatePermission($data){
         try {
 
 
-            // $user = User::findOrFail($this->user_id)->first();
-            // $user->name = $data['name'];
-            // $user->email = $data['email'];
-
-            // $user->update();
-
-            User::whereId($this->user_id)->update($data);
+            Permission::whereId($this->permission_id)->update($data);
 
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'User Updated.',
                 'icon'=>'success',
                 'iconColor'=>'green',
             ]);
-            $this->dispatchBrowserEvent('closeModal', 'createUser');
+            $this->dispatchBrowserEvent('closeModal', 'createPermission');
+
+            $this->resetForm();
         } catch (\Throwable $th) {
 
             $this->dispatchBrowserEvent('Swal', [
@@ -121,10 +108,10 @@ class UsersList extends Component
 
 
     //DELETE USER
-    public function deleteUser($id){
+    public function deletePermission($id){
         try {
             // User::delete($id);
-            User::where('id', $id)->first()->delete();
+            Permission::where('id', $id)->first()->delete();
             $this->dispatchBrowserEvent('Swal', [
                 'title' => 'Item has deleted.',
                 'icon'=>'success',
@@ -134,5 +121,9 @@ class UsersList extends Component
             //throw $th;
             dd($th);
         }
+    }
+
+    public function resetForm(){
+        $this->name = null;
     }
 }

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class HomeController extends Controller
 {
@@ -24,6 +27,12 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home')->with(['total_users' => User::all()->count()]);
+        return view('home')->with(
+            [
+                'total_users' => User::all()->count(),
+                'total_products' => Product::all()->count(),
+                'total_roles' => Role::all()->count(),
+                'total_permissions' => Permission::all()->count()
+                ]);
     }
 }
